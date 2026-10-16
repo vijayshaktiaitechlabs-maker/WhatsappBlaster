@@ -1,0 +1,52 @@
+// sql/data/shakti_bot_texts.sql on the bench: only Shakti changes, only the intended keys, safe to run twice,
+// and the new bot's AI prompt then carries the same club description as the old bot's code.
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+const CRM = fileURLToPath(new URL('../../', import.meta.url)).replace(/\\/g, '/');
+import { makeDb, world, runNode, metaItem, cfg } from './harness.mjs';
+const db = await makeDb();
+const q = async (s, p) => (await db.query(s, p)).rows;
+let n = 0; const ok = (l, e = '') => console.log(`ok ${++n}. ${l}${e ? ' | ' + e : ''}`);
+const assert = (c, m) => { if (!c) { console.log('FAIL:', m); process.exit(1); } };
+await q(`insert into public.tenants (name, slug, bot_config) values ('Other Club', 'other', '{"brand":{"name":"Other"},"facilities":[{"name":"Shooting","timings":"x"}]}') on conflict do nothing`).catch(() => {});
+/* start from Shakti's settings as they are on live today (the test data already ran the data file once) */
+const liveToday = JSON.parse(readFileSync(CRM + 'staging/db/bot-config-shakti.json', 'utf8'));
+const [{ bc }] = await q(`select bot_config bc from public.tenants where slug='shakti'`);
+await q(`update public.tenants set bot_config = $1 where slug='shakti'`, [JSON.stringify({ ...liveToday, brand: { ...liveToday.brand, banner_url: bc.brand && bc.brand.banner_url } })]);
+const before = Object.fromEntries((await q(`select slug, bot_config from public.tenants`)).map((r) => [r.slug, r.bot_config]));
+const sql = readFileSync(CRM + 'sql/data/shakti_bot_texts.sql', 'utf8');
+await db.exec(sql);
+const once = Object.fromEntries((await q(`select slug, bot_config from public.tenants`)).map((r) => [r.slug, r.bot_config]));
+await db.exec(sql);
+const twice = Object.fromEntries((await q(`select slug, bot_config from public.tenants`)).map((r) => [r.slug, r.bot_config]));
+const s0 = before.shakti, s1 = once.shakti;
+const f = (c, name) => (c.facilities || []).find((x) => x.name === name) || {};
+assert(s1.brand.descriptor === 'a premium sports club in Vadodara, India' && /world-class sports & fitness hub/.test(s1.about) && /ALL of the 12\+ sporting facilities/.test(s1.membership_access), 'part 1');
+ok('Part 1 adds the three sentences the old bot had in its code', s1.brand.descriptor);
+assert(f(s1, 'Strength & Conditioning').timings === '6 AM–8 PM' && f(s1, 'Shooting').timings === '4 PM–9 PM' && /members only/.test(f(s1, 'Shooting').detail) && s1.maintenance === '12 PM – 3 PM', 'part 2');
+ok('Part 2 sets the new timings and maintenance, and keeps "members only" for Shooting', `${f(s1, 'Shooting').detail} (${f(s1, 'Shooting').timings})`);
+assert(/Strength & Conditioning 6:00 AM – 8:00 PM/.test(s1.contact.hours) && !/5:00 AM/.test(s1.contact.hours), 'hours');
+ok('the opening-hours line no longer says "Gym from 5:00 AM"', s1.contact.hours);
+const changed = Object.keys({ ...s0, ...s1 }).filter((k) => JSON.stringify(s0[k]) !== JSON.stringify(s1[k])).sort();
+assert(changed.join(',') === 'about,brand,contact,facilities,maintenance,membership_access', 'changed keys ' + changed);
+const brandChanged = Object.keys({ ...s0.brand, ...s1.brand }).filter((k) => JSON.stringify(s0.brand[k]) !== JSON.stringify(s1.brand[k]));
+const contactChanged = Object.keys({ ...s0.contact, ...s1.contact }).filter((k) => JSON.stringify(s0.contact[k]) !== JSON.stringify(s1.contact[k]));
+const facChanged = s0.facilities.map((x, i) => JSON.stringify(x) !== JSON.stringify(s1.facilities[i]) ? x.name : null).filter(Boolean);
+assert(brandChanged.join() === 'descriptor' && contactChanged.join() === 'hours' && facChanged.join() === 'Shooting,Strength & Conditioning' && s0.facilities.length === s1.facilities.length, 'only intended');
+ok('nothing else changes: only brand.descriptor, about, membership_access, contact.hours, 2 facilities, maintenance', `facility order kept (${s1.facilities.length})`);
+assert(JSON.stringify(once) === JSON.stringify(twice), 'idempotent');
+ok('running it a second time changes nothing');
+for (const slug of Object.keys(before)) if (slug !== 'shakti') assert(JSON.stringify(before[slug]) === JSON.stringify(once[slug]), 'other club changed: ' + slug);
+ok('other clubs are untouched', Object.keys(before).filter((s) => s !== 'shakti').join(', '));
+// the new bot's prompt now describes Shakti as the old code did
+await q(`update public.wa_messages set created_at = created_at - interval '1 day'`);
+const PHONE = String(cfg.testPhones[0]).replace(/\D/g, '');
+const w = world(db);
+const body = { object: 'whatsapp_business_account', entry: [{ id: 'W', changes: [{ field: 'messages', value: { messaging_product: 'whatsapp', metadata: { phone_number_id: cfg.whatsapp.phoneNumberId }, contacts: [{ wa_id: PHONE }], messages: [{ from: PHONE, id: 'wamid.DATA.1', timestamp: String(Math.floor(Date.now() / 1000)), type: 'text', text: { body: 'Which sports can I play with a membership?' } }] } }] }] };
+await runNode('wa_bot_wf.json', 'Bot Engine', metaItem(w, body), w);
+const prompt = (await q(`select payload from public.stg_outbox where kind='ai_prompt' order by id desc limit 1`))[0].payload.text;
+assert(/official WhatsApp assistant for Shakti Sports Club, a premium sports club in Vadodara, India/.test(prompt) && /MEMBERSHIP ACCESS: Both the Family/.test(prompt) && /ABOUT: A world-class/.test(prompt) && /they can also call .*6 AM–9 PM/.test(prompt), 'prompt');
+ok('the bot\'s AI prompt then opens exactly like today\'s ("…Shakti Sports Club, a premium sports club in Vadodara, India") with the same facts and staff hours');
+assert(/Strength & Conditioning: Fully air-conditioned performance gym \(6 AM–8 PM\)/.test(prompt) && /Maintenance timings: 12 PM – 3 PM/.test(prompt), 'timings in prompt');
+ok('and it carries the new timings as always-correct facts');
+console.log(`\nAll ${n} data-update checks passed.`);

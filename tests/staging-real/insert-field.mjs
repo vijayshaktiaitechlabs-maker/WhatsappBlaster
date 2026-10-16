@@ -1,0 +1,60 @@
+// REAL-mode check on STAGING of "＋ Insert a field…": staging page (preview), staging Supabase, [STAGING] n8n, Meta TEST number.
+// ONE row, to the first test phone only (the user's own). Verifies in the database what Meta accepted and delivered.
+import { chromium } from '../bench/node_modules/playwright-core/index.mjs';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { simContext } from '../../tools/sim-wa.mjs';
+const HERE = fileURLToPath(new URL('./', import.meta.url));
+const BASE = `http://127.0.0.1:${process.env.PORT || 8788}`;
+const login = JSON.parse(readFileSync(HERE + '../../tools/qa-login.local.json', 'utf8'));
+const S = simContext().S;
+if (/ttpecupfolgbbdagkotc/.test(S.url)) throw new Error('refusing: live project');
+if (S.wa && S.wa.simulate) throw new Error('simulate is on: this suite is for real Meta mode');
+const PHONE = S.phones[0];
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let bad = 0;
+const rec = (test, ok, ev = '') => { if (!ok) bad++; console.log(`${ok ? 'PASS' : 'FAIL'} | ${test} | ${String(ev).slice(0, 260)}`); };
+const H = { apikey: S.serviceKey, Authorization: `Bearer ${S.serviceKey}`, 'Content-Type': 'application/json' };
+const rest = async (path) => { const r = await fetch(`${S.url}/rest/v1/${path}`, { headers: H }); const t = await r.text(); try { return JSON.parse(t); } catch { return t; } };
+const [tenant] = await rest('tenants?slug=eq.shakti&select=id'); const T = tenant.id;
+const stamp = Date.now().toString(36);
+const waitRow = async (fn, ms = 90000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { const r = await fn(); if (r) return r; await sleep(3000); } return null; };
+
+const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const page = await (await browser.newContext({ viewport: { width: 1440, height: 950 } })).newPage(); const errs = [];
+page.on('pageerror', (e) => errs.push(String(e.message).slice(0, 200)));
+page.on('dialog', async (d) => { await d.accept(); });
+const t = async (sel) => ((await page.locator(sel).first().textContent().catch(() => '')) || '').replace(/\s+/g, ' ').trim();
+try {
+  await page.goto(BASE + '/admin/', { waitUntil: 'networkidle' });
+  await page.fill('#email', login.email); await page.fill('#password', login.password); await page.click('#authBtn');
+  await page.waitForSelector('#app:not(.hidden)', { timeout: 30000 }); await sleep(2500);
+  await page.evaluate(() => { go('broadcasts'); newCampaign(); }); await sleep(900);
+  await page.evaluate(() => setAudSource('sheet')); await sleep(300);
+  await page.setInputFiles('#sheetFile', { name: 'insert-field.csv', mimeType: 'text/csv', buffer: Buffer.from(`Name,Mobile,FCM No.,Member No\nVijay Test,${PHONE},FCM${stamp.slice(-3).toUpperCase()},SSC-${stamp.slice(-4).toUpperCase()}\n`) }); await sleep(1800);
+  await page.evaluate(() => { pickTpl('dues_reminder'); setVarText('2', '2026-27'); setVarText('3', 'Rs 500 (staging test)'); setVarSrc('5', 'nothing'); setVarSrc('6', 'nothing'); }); await sleep(500);
+  const box = page.locator('[data-vk="4"]'), pick = page.locator(`.var-insert[onchange*="insertToken('4'"]`);
+  await box.click(); await box.fill('Your membership  is over, please pay ');
+  await page.evaluate(() => { const el = document.querySelector('[data-vk="4"]'); el.focus(); el.setSelectionRange(16, 16); });
+  await pick.selectOption('col:Member No'); await sleep(300);
+  await page.evaluate(() => { const el = document.querySelector('[data-vk="4"]'); el.focus(); el.setSelectionRange(el.value.length, el.value.length); });
+  await pick.selectOption('col:FCM No.'); await sleep(500);
+  const want = `Your membership SSC-${stamp.slice(-4).toUpperCase()} is over, please pay FCM${stamp.slice(-3).toUpperCase()}`;
+  const preview = await t('#waBubble');
+  rec('the preview shows the sentence with this row\'s values', preview.includes(want) && !/\{\{/.test(preview), (preview.match(/Your membership.{0,60}/) || [''])[0]);
+  await page.fill('#c_name', 'Insert field real ' + stamp);
+  await page.click('#cmpSendBtn');
+  await page.waitForFunction(() => /Sent to|Nothing was sent|⚠️/.test(document.getElementById('cmpResult').textContent), null, { timeout: 120000 }).catch(() => {});
+  const res = await t('#cmpResult');
+  const [camp] = await rest(`broadcasts?tenant_id=eq.${T}&title=eq.${encodeURIComponent('Insert field real ' + stamp)}&select=id,status,sent_count,body`);
+  const r1 = camp ? (JSON.parse(camp.body).recipients || [])[0] : null;
+  rec('Meta accepted the message (a real WhatsApp id, campaign stored as sent)', !!camp && camp.status === 'sent' && !!r1 && !!r1.wamid && !/SIM|STAGING/.test(r1.wamid), `${res.slice(0, 70)} | status ${camp && camp.status}, row ${r1 && r1.status} ${r1 && r1.error ? r1.error : ''}`);
+  const msg = r1 && r1.wamid ? await waitRow(async () => (await rest(`wa_messages?tenant_id=eq.${T}&wamid=eq.${encodeURIComponent(r1.wamid)}&select=body,status`))[0], 30000) : null;
+  rec('the stored message text is the sentence with the member no. and FCM no. filled in', !!msg && String(msg.body).includes(want) && !/\{\{/.test(String(msg.body)), msg ? (String(msg.body).match(/Your membership.{0,60}/) || [''])[0] : 'not stored');
+  const st = r1 && r1.wamid ? await waitRow(async () => { const x = (await rest(`wa_message_status?wamid=eq.${encodeURIComponent(r1.wamid)}&select=status,error_code`))[0]; return x && ['delivered', 'read', 'failed'].includes(x.status) ? x : null; }, 100000) : null;
+  rec('Meta delivered it to the phone', !!st && ['delivered', 'read'].includes(st.status), st ? `status ${st.status}${st.error_code ? ' error ' + st.error_code : ''}` : 'no delivery report within 100 s');
+} catch (e) { rec('finished without a script error', false, String(e.message).slice(0, 400)); }
+rec('no script errors on the page', !errs.length, errs.join(' | ') || 'none');
+await browser.close();
+console.log(`${bad ? bad + ' FAILED' : 'all passed'}`);
+process.exit(bad ? 1 : 0);

@@ -1,0 +1,3 @@
+# Store every file byte-for-byte. The deploy tooling compares git contents with
+# what the live server returns, so line-ending conversion would look like drift.
+* -text

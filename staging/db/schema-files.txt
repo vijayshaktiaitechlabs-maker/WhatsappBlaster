@@ -1,0 +1,30 @@
+# The sql/ files that make up the LIVE database structure, in the order they were applied.
+# The staging database is built from exactly these files (see tools/build-staging.mjs).
+#
+# Checked against the live database on 2026-09-28 (staging/db/live-schema.json).
+# NOT listed, because they were never run on live:
+#   broadcast_backend.sql                   (broadcasts.scheduled_at etc. and broadcast_recipients don't exist on live)
+#   orena_onboarding_master_migration.sql   (ops_admins, billing_events and the extra tenant columns don't exist on live)
+#
+# When an approved change adds a new sql file: run it on staging, then on live, then add it here.
+
+shakti_setup.sql
+shakti_portal.sql
+shakti_admin.sql
+shakti_prod_hardening.sql
+shakti_multitenant_spine.sql
+admin_erp_backend.sql
+rag_kb.sql
+wa_memory.sql
+kb_learning.sql
+shakti_load_config.sql
+
+# In staging now, pending approval for live (run on live before deploying the matching panel change):
+wa_custom_templates.sql
+wa_message_status.sql
+wa_inbox.sql
+staff_hardening.sql
+portal_hardening.sql
+wa_media.sql
+members_dues_mark.sql
+kb_files.sql

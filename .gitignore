@@ -1,0 +1,83 @@
+# ==============================================================
+# Orena CRM — .gitignore
+# Stage-0 hardening: keep live secrets and heavy/binary junk OUT of git.
+# Secret-bearing files are listed explicitly; they are being remediated
+# (rotate keys -> move to n8n credentials). Do NOT remove these lines
+# until the files are confirmed secret-free.
+# ==============================================================
+
+# --- dependencies / build artifacts ---
+node_modules/
+**/node_modules/
+Orena_website-main/dist/
+Orena_website-main/build/
+.vite/
+
+# --- binaries / large media (not source) ---
+*.exe
+*.pptx
+*.docx
+*.xlsx
+*.pdf
+*.jpeg
+*.jpg
+*.png
+# the test club logo that npm run staging:deploy puts in the staging storage
+!staging/assets/shakti-logo.png
+*.eml
+
+# --- n8n workflow exports & backups (contain hardcoded secrets) ---
+_backups/
+SALESCRMMM.json
+SALESCRMMM_for_n8n_cloud_import.json
+enr_base.json
+CRM_FINAL.json
+orena_crm_complete.json
+n8n_crm_workflow*.json
+n8n_workflow2_whatsapp_crud.json
+*(1).json
+*(2).json
+*(3).json
+*WF2).json
+orena-social-crm/workflows/WF[1-6]_*.json
+orena-social-crm/workflows/live-export/
+orena-social-crm/archive/
+orena-social-crm/.staging-build/
+lead-hub/.build/
+
+# --- credential stores & secret-bearing docs ---
+Orena_All_Credentials.md
+credential_wiring_guide.md
+orena-social-crm/workflows/credential_wiring_guide_v2.md
+espocrm_integration_plan.md
+Orena_WhatsApp_Bot_Documentation.html
+generate_whatsapp_bot_excel.py
+generate_merged_credentials.py
+orena-social-crm/scripts/demo_lead.py
+credentials_handoff/
+_private/
+
+# --- staging / deploy tooling (local secrets, generated output, backups) ---
+tools/config.local.json
+.staging-build/
+deploy-backups/
+
+# --- scratch / test artifacts ---
+_scratch/
+cur_test_*.txt
+*.metadata.json
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# --- local test bench output ---
+tests/bench/out/
+
+# --- real-Meta staging test login and output ---
+tools/qa-login.local.json
+tests/staging-real/out/
+!staging/test-sheets/poster-test.png
+staging/test-sheets/*.csv

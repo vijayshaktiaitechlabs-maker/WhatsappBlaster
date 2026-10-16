@@ -1,0 +1,21 @@
+{
+  "staging": {
+    "supabaseUrl": "PASTE_https://your-staging-project.supabase.co",
+    "anonKey": "PASTE_legacy anon key of the STAGING project (starts with eyJ)",
+    "serviceKey": "PASTE_legacy service_role key of the STAGING project (starts with eyJ)",
+    "adminEmail": "PASTE_the email you will log in to the test admin panel with",
+    "testPhones": ["PASTE_your WhatsApp number with country code, e.g. 919876543210"],
+    "whatsapp": {
+      "phoneNumberId": "",
+      "wabaId": "",
+      "token": "",
+      "appSecret": "",
+      "verifyToken": "",
+      "simulate": false
+    },
+    "geminiKey": ""
+  },
+  "n8nApiKey": "",
+  "sshKey": "",
+  "liveServiceKey": ""
+}

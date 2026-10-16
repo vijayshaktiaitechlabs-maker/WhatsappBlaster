@@ -1,0 +1,57 @@
+[
+  {
+    "name": "Broadcast Scheduler (Shakti)",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "minutes",
+                "minutesInterval": 5
+              }
+            ]
+          }
+        },
+        "id": "778a46b3-6c84-482f-8d9e-5e263ab21111",
+        "name": "Every 5 Minutes",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          200,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst H = this.helpers;\nconst SUPA = '__SUPABASE_URL__';\nconst SR = '__SUPABASE_SERVICE_KEY__';\nconst CONFIRM = '__CONFIRM_TOKEN__';\nconst sH = { apikey: SR, Authorization: 'Bearer ' + SR };\n\n// 1. Find Shakti's scheduled campaigns (Broadcast Send sends from Shakti's number only; another club's\n//    campaign is left as it is instead of being stuck at 'sending')\nlet due = [], TID = null;\ntry {\n  const tr = await H.httpRequest({ method: 'GET', url: SUPA + '/rest/v1/tenants?slug=eq.shakti&select=id', headers: sH, json: true });\n  TID = Array.isArray(tr) && tr[0] ? tr[0].id : null;\n  if (!TID) return [{ json: { error: 'tenant shakti not found' } }];\n  const url = SUPA + '/rest/v1/broadcasts?status=eq.scheduled&tenant_id=eq.' + TID + '&select=id,title,template_name,body,created_at';\n  const rows = await H.httpRequest({ method: 'GET', url, headers: sH, json: true });\n  if (Array.isArray(rows)) {\n    const now = new Date();\n    for (const r of rows) {\n      let cfg = {};\n      try { cfg = JSON.parse(r.body || '{}'); } catch(e) {}\n      const schedAt = cfg.schedule_at || (cfg.segment && cfg.segment.schedule_at);\n      if (schedAt && new Date(schedAt) <= now) {\n        due.push({ id: r.id, title: r.title, template_name: r.template_name, cfg });\n      }\n    }\n  }\n} catch(e) {\n  return [{ json: { error: 'Failed to query scheduled broadcasts: ' + (e.message || e) } }];\n}\n\n/* 1b. No scheduled campaign due: continue ONE long campaign that is waiting for its next batch (Broadcast Send\n   sends at most ~120 recipients per run and saves its progress on the row; the page continues it while open,\n   this tick continues it when the page has gone quiet for 90 s and no other run holds its lease). */\nif (!due.length) {\n  let waiting = [];\n  try {\n    const rows = await H.httpRequest({ method: 'GET', url: SUPA + '/rest/v1/broadcasts?status=eq.sending&tenant_id=eq.' + TID + '&select=id,title,body', headers: sH, json: true });\n    const now = Date.now();\n    for (const r of (Array.isArray(rows) ? rows : [])) {\n      let cfg = {}; try { cfg = JSON.parse(r.body || '{}'); } catch (e) {}\n      const p = cfg.progress; if (!p || !(Number(p.done) < Number(p.total))) continue;\n      const lease = p.lease_until ? new Date(p.lease_until).getTime() : 0;\n      const quiet = now - (p.next_at ? new Date(p.next_at).getTime() : 0);\n      if (lease > now || quiet < 90 * 1000) continue;\n      waiting.push({ id: r.id, title: r.title, cfg, quiet });\n    }\n  } catch (e) {}\n  if (!waiting.length) return [{ json: { status: 'No scheduled campaigns due', checked_at: new Date().toISOString() } }];\n  waiting.sort((a, b) => b.quiet - a.quiet);\n  const item = waiting[0];\n  try {\n    const res = await H.httpRequest({ method: 'POST', url: 'https://n8n.example.com/webhook/broadcast-send',\n      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenant: (item.cfg && item.cfg.tenant) || 'shakti', confirm: CONFIRM, broadcast_id: item.id, dry_run: false, resume: true }), json: true });\n    if (!res || res.ok !== true) {\n      /* a refusal that is not \"busy\": note it on the row; after 3 such ticks the campaign is marked failed with the reason */\n      if (!(res && res.busy)) {\n        const errs = Number((item.cfg.progress && item.cfg.progress.resume_errors) || 0) + 1;\n        const why = String((res && res.error) || 'Broadcast Send gave no answer').slice(0, 300);\n        if (errs >= 3) await markFailed(item.id, item.cfg, 'could not continue the campaign: ' + why);\n        else { item.cfg.progress.resume_errors = errs; item.cfg.last_error = why;\n          try { await H.httpRequest({ method: 'PATCH', url: SUPA + '/rest/v1/broadcasts?id=eq.' + item.id + '&status=eq.sending', headers: { ...sH, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify({ body: JSON.stringify(item.cfg) }) }); } catch (e) {} }\n      }\n      return [{ json: { checked_at: new Date().toISOString(), resumed: item.title, ok: false, res } }];\n    }\n    return [{ json: { checked_at: new Date().toISOString(), resumed: item.title, ok: true, partial: !!res.partial, done: res.done, remaining: res.remaining } }];\n  } catch (e) {\n    return [{ json: { checked_at: new Date().toISOString(), resumed: item.title, ok: false, error: String(e.message || e).slice(0, 200) } }];\n  }\n}\n\n// 2. Dispatch each due campaign via broadcast-send webhook\nconst dueAt = (cfg) => cfg.schedule_at || (cfg.segment && cfg.segment.schedule_at);\n/* only while it is still 'sending': a campaign Broadcast Send has already marked 'sent' is never overwritten */\nconst markFailed = async (id, cfg, why) => {\n  try {\n    await H.httpRequest({\n      method: 'PATCH',\n      url: SUPA + '/rest/v1/broadcasts?id=eq.' + id + '&status=eq.sending',\n      headers: { ...sH, 'Content-Type': 'application/json', Prefer: 'return=minimal' },\n      body: JSON.stringify({ status: 'failed', body: JSON.stringify(Object.assign({}, cfg, { last_error: why, failed_at: new Date().toISOString() })) })\n    });\n  } catch (err) {}\n};\nconst results = [];\n/* one campaign per tick: a dispatch can take ~200 s and this run must end before the server's 300 s limit */\nfor (const item of due.slice(0, 1)) {\n  // Claim it: only the run that moves it from 'scheduled' to 'sending' dispatches it, so overlapping runs never\n  // send it twice. sent_at is cleared: Broadcast Send sets it once when it takes the campaign.\n  try {\n    const claimed = await H.httpRequest({\n      method: 'PATCH',\n      url: SUPA + '/rest/v1/broadcasts?id=eq.' + item.id + '&status=eq.scheduled',\n      headers: { ...sH, 'Content-Type': 'application/json', Prefer: 'return=representation' },\n      body: JSON.stringify({ status: 'sending', sent_at: null }),\n      json: true\n    });\n    const row = Array.isArray(claimed) ? claimed[0] : null;\n    if (!row) { results.push({ id: item.id, title: item.title, ok: true, skipped: 'taken by another run or changed' }); continue; }\n    try { item.cfg = JSON.parse(row.body || '{}'); } catch (e) { item.cfg = {}; }\n    const at = dueAt(item.cfg);\n    if (!at || new Date(at) > new Date()) {\n      // staff moved it to a later time a moment ago: put it back\n      await H.httpRequest({\n        method: 'PATCH',\n        url: SUPA + '/rest/v1/broadcasts?id=eq.' + item.id + '&status=eq.sending',\n        headers: { ...sH, 'Content-Type': 'application/json', Prefer: 'return=minimal' },\n        body: JSON.stringify({ status: 'scheduled' })\n      });\n      results.push({ id: item.id, title: item.title, ok: true, skipped: 'rescheduled' });\n      continue;\n    }\n  } catch (e) {\n    results.push({ id: item.id, title: item.title, ok: false, error: 'could not claim it: ' + (e.message || e) });\n    continue;\n  }\n  try {\n    const payload = {\n      tenant: (item.cfg && item.cfg.tenant) || 'shakti', /* as on live since 2026-09-17 */\n      confirm: CONFIRM,\n      broadcast_id: item.id,\n      dry_run: false,\n      template: item.cfg.template || item.template_name,\n      language: item.cfg.language || 'en',\n      image_url: item.cfg.image_url || null,\n      vars: item.cfg.vars || {},\n      custom_recipients: item.cfg.custom_recipients || undefined,\n      segment: item.cfg.segment || undefined\n    };\n\n    const res = await H.httpRequest({\n      method: 'POST',\n      url: 'https://n8n.example.com/webhook/broadcast-send',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify(payload),\n      json: true\n    });\n\n    // Broadcast Send answers 200 even when it refuses: then the campaign is 'failed', with its reason for staff\n    if (!res || res.ok !== true) {\n      const why = String((res && (res.error || (res.errors && res.errors[0]))) || 'Broadcast Send gave no answer').slice(0, 300);\n      await markFailed(item.id, item.cfg, why);\n      results.push({ id: item.id, title: item.title, ok: false, error: why });\n      continue;\n    }\n    results.push({ id: item.id, title: item.title, ok: true, res });\n  } catch(e) {\n    // Mark failed\n    await markFailed(item.id, item.cfg, 'dispatch failed: ' + String(e.message || e).slice(0, 200));\n    results.push({ id: item.id, title: item.title, ok: false, error: e.message || e });\n  }\n}\n\nreturn [{ json: { checked_at: new Date().toISOString(), processed: results.length, results } }];\n"
+        },
+        "id": "889b57c4-7d95-493f-9e0f-6f374bc32222",
+        "name": "Check & Dispatch Due Campaigns",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          460,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Every 5 Minutes": {
+        "main": [
+          [
+            {
+              "node": "Check & Dispatch Due Campaigns",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "id": "scHeduLeR935shAK"
+  }
+]

@@ -1,0 +1,28 @@
+# Test site: serves the staging build at https://n8n.example.com/staging/...
+# Lives in its own folder (/docker/staging) and compose project, so starting or stopping it
+# never touches the live admin, orena-admin or n8n containers.
+services:
+  staging:
+    image: nginx:alpine
+    container_name: shakti-staging
+    restart: unless-stopped
+    volumes:
+      - /docker/staging/web:/usr/share/nginx/html:ro
+      - /docker/staging/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - n8n_default
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=n8n_default
+      - "traefik.http.routers.shakti-staging.rule=Host(`n8n.example.com`) && PathPrefix(`/staging`)"
+      - traefik.http.routers.shakti-staging.entrypoints=web,websecure
+      - traefik.http.routers.shakti-staging.tls=true
+      - traefik.http.routers.shakti-staging.tls.certresolver=mytlschallenge
+      - traefik.http.routers.shakti-staging.priority=100
+      - "traefik.http.middlewares.shakti-staging-strip.stripprefix.prefixes=/staging"
+      - traefik.http.routers.shakti-staging.middlewares=shakti-staging-strip
+      - traefik.http.services.shakti-staging.loadbalancer.server.port=80
+
+networks:
+  n8n_default:
+    external: true

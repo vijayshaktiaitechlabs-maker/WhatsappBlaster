@@ -1,0 +1,41 @@
+{
+  "brand": {
+    "name": "Shakti Sports Club",
+    "tagline": "Where Athletes become Champions",
+    "greeting": "🏆 Welcome to Shakti Sports Club!\nWhere athletes become champions. I can help you with membership, court & cafe bookings, and upcoming events. What would you like to do?",
+    "menu_button": "Menu"
+  },
+  "menu": [
+    { "id": "menu:membership", "title": "Membership",           "desc": "Plans, benefits & how to join" },
+    { "id": "menu:book",       "title": "Book a Court",          "desc": "Reserve a court" },
+    { "id": "menu:cafe",       "title": "Cafe Reservation",      "desc": "Book a table at the cafe" },
+    { "id": "menu:events",     "title": "Events & Tournaments",  "desc": "Register for events & workshops" },
+    { "id": "menu:offers",     "title": "Membership Offers",     "desc": "Current exclusive offers" },
+    { "id": "menu:human",      "title": "Talk to Team",          "desc": "Speak to our staff" }
+  ],
+  "services": [
+    { "id": "svc:membership", "name": "Club Membership", "detail": "Full access to courts, gym and cafe with member pricing.", "price": "TODO: real tiers/prices" },
+    { "id": "svc:courts",     "name": "Court Booking",   "detail": "Book courts by the hour, members and guests.",            "price": "TODO: per-hour rate" },
+    { "id": "svc:cafe",       "name": "Cafe",            "detail": "Reserve a table at the club cafe.",                       "price": "TODO: if any" }
+  ],
+  "pricing_text": "💠 *Membership Plans*\n• TODO: Plan A — ₹____/year\n• TODO: Plan B — ₹____/year\n• TODO: Family/Corporate — custom\nTap *Talk to Team* for a personalised quote or a club tour.",
+  "offers_text": "🎁 *Current Offers*\n• TODO: add current membership offers here (Shakti to provide).\nTap *Membership* to see plans or *Talk to Team* to claim.",
+  "booking_note": "Share your preferred date & time and we'll confirm your court/table. (Live booking added in Phase 2.)",
+  "events_intro": "🏸 *Upcoming at Shakti* — tap an event to register. New events are added by the club regularly.",
+  "human_handoff": "✅ A Shakti Sports Club team member will reach out shortly. You can also call us on +91 88669 48999.",
+  "contact": {
+    "address": "B/s. Shakti Greens and Banquet, Near Bright Day School, Vasna-Bhayli Road, Vadodara - 391410",
+    "phone": "+91 8866948999",
+    "email": "info@shaktisportsclub.com",
+    "website": "www.shaktisportsclub.com",
+    "hours": "TODO: club opening hours"
+  },
+  "faq": [
+    { "q": "What are your timings / when are you open?", "a": "TODO: add opening hours. You can also call +91 88669 48999." },
+    { "q": "Where are you located?", "a": "We're B/s. Shakti Greens and Banquet, Near Bright Day School, Vasna-Bhayli Road, Vadodara - 391410." },
+    { "q": "How do I become a member?", "a": "Tap *Membership* to see plans, or *Talk to Team* for a tour and to sign up." },
+    { "q": "Can I bring guests?", "a": "Yes — members get guest passes. Tap *Talk to Team* to check your guest-pass balance or add guests." },
+    { "q": "How do I book a court?", "a": "Tap *Book a Court*, share your preferred date & time, and our team confirms your slot." },
+    { "q": "Do you host tournaments or workshops?", "a": "Yes! Tap *Events & Tournaments* to see what's coming up and register." }
+  ]
+}

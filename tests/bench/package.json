@@ -1,0 +1,18 @@
+{
+  "name": "shakti-one-bench",
+  "private": true,
+  "description": "Local test bench: the staging-built workflows and admin page against an in-memory copy of the staging database. See README.md.",
+  "type": "module",
+  "scripts": {
+    "db": "node inbox-db.mjs",
+    "workflows": "node workflows.mjs",
+    "data": "node bot-texts-data.mjs",
+    "browser": "node browser.mjs",
+    "test": "node inbox-db.mjs && node workflows.mjs && node bot-texts-data.mjs && node browser.mjs && npm run qa",
+    "qa": "node qa-sql_staff.mjs && node qa-workflows.mjs && node qa-bot.mjs && node qa-tools_docs.mjs && node qa-page_members.mjs && node qa-page_ops.mjs && node qa-page_campaigns.mjs && node qa-page_inbox.mjs && node qa-page_settings.mjs && node qa-batches.mjs && node layout-actions.mjs && node qa-insert-field.mjs && node qa-paylink-save.mjs && node qa-template-variable.mjs && node qa-sheet-payment-link.mjs && node qa-media-qr.mjs && node qa-marketing-cap.mjs && node qa-inbox-types.mjs && node qa-dues-ack.mjs && node qa-kb-files.mjs && node qa-kb-gap-file.mjs && node qa-kb-notes.mjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "0.3.16",
+    "playwright-core": "1.63.0"
+  }
+}

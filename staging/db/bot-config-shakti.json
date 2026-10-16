@@ -1,0 +1,256 @@
+{
+  "faq": [
+    {
+      "a": "We are open from morning 6AM to night 11PM",
+      "q": "What are your timings / when are you open?"
+    },
+    {
+      "a": "We are located Besides Shakti Green & Banquets, Near Bright Day School, Vasna-Bhayli Main Road, Vadodara - 391410",
+      "q": "Where exactly are you located?"
+    },
+    {
+      "a": "Need to submit the required documents (Aadhar card, PAN Card, Passport size photographs, and GST certificate if applicable). Fill up the form for the membership and signatures on the agreement. After that we provide the membership number with the facial recognition.",
+      "q": "How do I become a member? What's the process?"
+    },
+    {
+      "a": "Yes, you can bring in guests. You get 20 guest passes each year for family membership and 10 for individual. Validity of each guest pass is one hour-one sport. Each guest pass is worth Rs. 500/-. You can purchase more guest passes if you have exhausted the given ones.",
+      "q": "Can I bring guests? How do guest passes work?"
+    },
+    {
+      "a": "No",
+      "q": "Do you offer a free trial or day pass?"
+    },
+    {
+      "a": "At Shakti, we have 12+ sporting facilities, which include Swimming, Padel, Indoor Badminton, Squash, Table Tennis, Football, Volleyball, Box Cricket, Gym, Shooting, Lawn Tennis, and Pickleball.",
+      "q": "What sports / facilities are available?"
+    },
+    {
+      "a": "At Shakti Sports Club, we offer 10-year Family and Individual memberships. Family Membership: Covers husband, wife, and up to 3 children, with annual maintenance of ₹25,000 + GST from the 2nd year and 20 complimentary guest passes every year. Individual Membership: Valid for one person, with annual maintenance of ₹18,000 + GST from the 2nd year and 10 complimentary guest passes annually.",
+      "q": "What are the membership fees and what's included?"
+    },
+    {
+      "a": "Only members and corporates can book the courts. You need to book the courts in advance by informing at the reception and we'll let you know the availability.",
+      "q": "How do I book a court? Can I book in advance?"
+    },
+    {
+      "a": "Coaching is provided in major sports of the club (Badminton, Tennis, Table Tennis, Swimming, Squash and Football).",
+      "q": "What are the coaching options?"
+    },
+    {
+      "a": "Yes, the tournaments are majorly for the members. You get all the details including the dates and registration form through the Members' WhatsApp Group, Club's website and Instagram. The workshops are for everyone and you get the forms to register through the same sources.",
+      "q": "Do you host tournaments or workshops? How do I register?"
+    },
+    {
+      "a": "Cheque, Card, NEFT, RTGS, Bank Transfer",
+      "q": "What payment methods do you accept?"
+    },
+    {
+      "a": "No",
+      "q": "Can I freeze / pause or cancel my membership?"
+    },
+    {
+      "a": "No smoking inside the facility, no eating & drinking on the courts/sports arena. Proper shoes are required to access the facilities. Proper attire for accessing the swimming pool.",
+      "q": "Is there a dress code or any rules I should know?"
+    },
+    {
+      "a": "Changing rooms, Lockers, Café, Wi-Fi, Lounge.",
+      "q": "What amenities are there?"
+    }
+  ],
+  "menu": [
+    {
+      "id": "menu:membership",
+      "desc": "Plans, what's included & joining",
+      "title": "Membership"
+    },
+    {
+      "id": "menu:facilities",
+      "desc": "Our 12+ sports & amenities",
+      "title": "Sports & Facilities"
+    },
+    {
+      "id": "menu:coaching",
+      "desc": "Programs, timings & coaches",
+      "title": "Coaching"
+    },
+    {
+      "id": "menu:book",
+      "desc": "Reserve a court or slot",
+      "title": "Book a Court"
+    },
+    {
+      "id": "menu:events",
+      "desc": "Tournaments & workshops",
+      "title": "Events"
+    },
+    {
+      "id": "menu:visit",
+      "desc": "Hours & directions",
+      "title": "Timings & Location"
+    },
+    {
+      "id": "menu:human",
+      "desc": "Speak with our staff",
+      "title": "Talk to Team"
+    }
+  ],
+  "brand": {
+    "name": "Shakti Sports Club",
+    "voice": "Premium community — warm, formal and friendly",
+    "tagline": "Where athletes become champions",
+    "greeting": "🙏 Namaste! Welcome to Shakti Sports Club — where athletes become champions. I'm the club assistant. Ask me about memberships, our 12+ sports, coaching, timings, or events. How can I help you today?",
+    "languages": [
+      "English",
+      "Hindi",
+      "Gujarati"
+    ],
+    "banner_url": "",
+    "menu_button": "Menu"
+  },
+  "rules": "No smoking inside the facility. No eating or drinking on the courts/arena. Proper shoes are required for all facilities, and proper swimwear for the pool.",
+  "booking": "Only members and corporates can book courts. Book in advance via reception or WhatsApp and we'll confirm availability. Slots are 60 minutes, bookable up to 2 days ahead.",
+  "contact": {
+    "maps": "https://www.google.com/maps/search/?api=1&query=Shakti%20Sports%20Club%20Vasna%20Bhayli%20Vadodara",
+    "email": "shaktisportsclub2023@gmail.com",
+    "hours": "Open every day, 6:00 AM – 11:00 PM (Gym from 5:00 AM; indoor sports till 9:00 PM)",
+    "phone": "+91 88669 48999",
+    "address": "Shakti Sports Club, Besides Shakti Green & Banquets, Near Bright Day School, Vasna-Bhayli Main Road, Vadodara – 391410",
+    "website": "https://shaktisportsclub.com/",
+    "facebook": "https://www.facebook.com/shaktisportsclub",
+    "instagram": "shaktisportsclub"
+  },
+  "coaching": [
+    {
+      "ages": "6+",
+      "coach": "Pratik Patel",
+      "sport": "Badminton",
+      "timings": "4–7 PM"
+    },
+    {
+      "ages": "4+",
+      "coach": "Ganesh Gawali",
+      "sport": "Tennis",
+      "timings": "7–8 AM, 4–8 PM"
+    },
+    {
+      "ages": "2+",
+      "coach": "Gira Choksi",
+      "sport": "Swimming",
+      "timings": "7–10 AM, 4–7 PM"
+    },
+    {
+      "ages": "6+",
+      "coach": "Dipendra Singh",
+      "sport": "Squash",
+      "timings": "7–9 AM, 4–7 PM"
+    },
+    {
+      "ages": "10+",
+      "coach": "Ravi Patel",
+      "sport": "Shooting",
+      "timings": "4–9 PM"
+    },
+    {
+      "ages": "6+",
+      "coach": "Shailesh Gosain",
+      "sport": "Table Tennis",
+      "timings": "5–7 PM"
+    },
+    {
+      "ages": "3+",
+      "coach": "Mukesh Patel",
+      "sport": "Football",
+      "timings": "5–7 PM"
+    },
+    {
+      "ages": "3–6",
+      "coach": "Mukesh Patel",
+      "sport": "Gross Motor Skills",
+      "timings": "5–6 PM"
+    },
+    {
+      "ages": "15+",
+      "coach": "Pankaj Sukhwal",
+      "sport": "Strength & Conditioning",
+      "timings": "6–10 AM, 4–7 PM"
+    }
+  ],
+  "amenities": "Changing rooms, lockers, café, Wi-Fi and a lounge.",
+  "escalation": {
+    "avoid": [
+      "referral program",
+      "parking",
+      "fee negotiation or money matters beyond the FAQ"
+    ],
+    "human_hours": "6 AM–9 PM"
+  },
+  "facilities": [
+    {
+      "name": "Badminton",
+      "detail": "Premium wooden, floodlit courts",
+      "timings": "6 AM–9 PM"
+    },
+    {
+      "name": "Tennis",
+      "detail": "Two courts, 8-layer Laykold synthetic surface",
+      "timings": "6 AM–11 PM"
+    },
+    {
+      "name": "Swimming",
+      "detail": "25 x 12.5 m semi-Olympic pool",
+      "timings": "6 AM–9 PM"
+    },
+    {
+      "name": "Squash",
+      "detail": "Two ASB German wooden-floor courts",
+      "timings": "6 AM–9 PM"
+    },
+    {
+      "name": "Pickleball",
+      "detail": "Eight Laykold synthetic courts",
+      "timings": "6 AM–11 PM"
+    },
+    {
+      "name": "Padel",
+      "detail": "Premium padel courts for all levels",
+      "timings": "6 AM–11 PM"
+    },
+    {
+      "name": "Table Tennis",
+      "detail": "Four STAG professional tables",
+      "timings": "6 AM–9 PM"
+    },
+    {
+      "name": "Shooting",
+      "detail": "10 m range (with coach present)",
+      "timings": "Members only"
+    },
+    {
+      "name": "Strength & Conditioning",
+      "detail": "Fully air-conditioned performance gym",
+      "timings": "Gym from 5 AM"
+    },
+    {
+      "name": "Football",
+      "detail": "",
+      "timings": "6 AM–11 PM"
+    },
+    {
+      "name": "Box Cricket",
+      "detail": "",
+      "timings": "6 AM–11 PM"
+    },
+    {
+      "name": "Volleyball",
+      "detail": "",
+      "timings": "6 AM–11 PM"
+    }
+  ],
+  "booking_note": "Share your preferred sport, date and time, and our team will confirm your court.",
+  "events_intro": "Here are our upcoming events — tap one to register.",
+  "guest_passes": "Family members get 20 guest passes a year; individuals get 10. Each pass covers one hour, one sport, and is worth ₹500. You can buy more once your complimentary passes are used.",
+  "human_handoff": "I'll connect you with our team — they'll assist you shortly. You can also call +91 88669 48999 (6 AM–9 PM) or visit shaktisportsclub.com.",
+  "membership_text": "At Shakti Sports Club, we offer 10-year Family and Individual memberships.\n\n• Family: covers husband, wife and up to 3 children — annual maintenance ₹25,000 + GST from the 2nd year, with 20 complimentary guest passes every year.\n• Individual: for one person — annual maintenance ₹18,000 + GST from the 2nd year, with 10 complimentary guest passes every year.\n\nFor current joining fees and to enrol, our team will guide you.",
+  "payment_methods": "Cheque, Card, NEFT, RTGS and Bank Transfer.",
+  "membership_process": "To join: submit documents (Aadhaar, PAN, passport-size photos, and GST certificate if applicable), fill the membership form and sign the agreement. We then issue your membership number with facial recognition."
+}

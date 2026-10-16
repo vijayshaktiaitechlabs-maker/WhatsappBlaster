@@ -1,0 +1,216 @@
+[
+  {
+    "name": "File Upload Relay (Shakti)",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "file-upload-relay",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "b7c1d2e3-0001-4000-8000-000000000001",
+        "name": "Upload request (POST)",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "webhookId": "c8d9e0f1-0001-4000-8000-000000000001"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Forwards one file as raw bytes: a JPG/PNG to a Meta resumable-upload session (a template's sample image),\n// or a member's photo/file from the bot to the private wa-media store.\n// The Code node only checks the request; the bytes go out through the \"Send bytes\" HTTP Request node,\n// because a Code node on this n8n cannot send a binary body.\nconst CONFIRM='__CONFIRM_TOKEN__';\nconst SUPA='__SUPABASE_URL__';\nconst ALLOW_STORAGE=false; // the test copy switches this on, to store posters in its own storage\n/* the private store of the photos and files members send on WhatsApp (the bot sends them here): <club id>/<phone>/<message id>.<type> */\nconst WA_MEDIA=SUPA+'/storage/v1/object/wa-media/';\nconst MEDIA_TYPES={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif','application/pdf':'pdf','audio/ogg':'ogg','audio/mpeg':'mp3','audio/aac':'aac','audio/amr':'amr','audio/mp4':'m4a','video/mp4':'mp4','video/3gpp':'3gp','application/msword':'doc','application/vnd.openxmlformats-officedocument.wordprocessingml.document':'docx','application/vnd.ms-excel':'xls','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':'xlsx','application/vnd.ms-powerpoint':'ppt','application/vnd.openxmlformats-officedocument.presentationml.presentation':'pptx','text/plain':'txt','text/csv':'csv','audio/opus':'opus','audio/wav':'wav','video/quicktime':'mov','image/heic':'heic'};\nconst b=($input.first().json.body)||{};\nconst fail=(error)=>[{json:{ok:false,error}}];\nif(b.confirm!==CONFIRM) return fail('Not authorized.');\nconst url=String(b.target_url||'');\n/* no dot segments in any spelling (\"..\", \"%2e\", a backslash): once the address is normalised they would lead\n   somewhere else on the same host (another Graph API call, or another part of the database) */\nconst dots=/\\.\\.|%2e|\\\\/i.test(url);\nconst toMeta=!dots&&/^https:\\/\\/graph\\.facebook\\.com\\/v\\d+\\.\\d+\\/upload:\\S+$/.test(url);\nconst toStorage=ALLOW_STORAGE&&!dots&&/^\\S+$/.test(url)&&url.startsWith(SUPA+'/storage/v1/object/');\nconst toWaMedia=!dots&&url.startsWith(WA_MEDIA)&&/^[0-9a-f-]{36}\\/[0-9]{8,15}\\/[A-Za-z0-9_.-]{1,120}\\.[a-z0-9]{1,5}$/.test(url.slice(WA_MEDIA.length));\nif(!toMeta&&!toStorage&&!toWaMedia) return fail('This upload address is not allowed.');\nconst mime=String(b.mime||'').toLowerCase();\nif(toWaMedia){ if(!MEDIA_TYPES[mime]) return fail('This file type cannot be stored.'); }\nelse if(!['image/jpeg','image/png'].includes(mime)) return fail('Only JPG or PNG images can be sent.');\nconst data=String(b.file_base64||'').replace(/\\s+/g,'');\nif(!data||!/^[A-Za-z0-9+/]+=*$/.test(data)) return fail('No file data provided.');\nconst size=Math.floor(data.length*3/4)-(data.endsWith('==')?2:data.endsWith('=')?1:0);\nif(toWaMedia?size>10*1024*1024:size>5*1024*1024) return fail(toWaMedia?'The file must be under 10 MB.':'The image must be under 5 MB.');\n/* the length is declared up front: Meta's upload session ignores a body sent without it */\nconst headers={'Content-Type':mime,'Content-Length':String(size)};\nfor(const [k,v] of Object.entries(b.headers||{})) if(['authorization','file_offset','apikey','x-upsert'].includes(String(k).toLowerCase())) headers[k]=String(v);\nreturn [{json:{ok:true,target_url:url,headers,size},binary:{data:{data,mimeType:mime,fileName:'upload.'+(MEDIA_TYPES[mime]||(mime==='image/png'?'png':'jpg'))}}}];\n"
+        },
+        "id": "b7c1d2e3-0002-4000-8000-000000000002",
+        "name": "Check request",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          240,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "b7c1d2e3-00c1-4000-8000-000000000001",
+                "leftValue": "={{ $json.ok }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "id": "b7c1d2e3-0003-4000-8000-000000000003",
+        "name": "Request OK?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          480,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.target_url }}",
+          "sendHeaders": true,
+          "specifyHeaders": "json",
+          "jsonHeaders": "={{ JSON.stringify($json.headers) }}",
+          "sendBody": true,
+          "contentType": "binaryData",
+          "inputDataFieldName": "data",
+          "options": {
+            "response": {
+              "response": {
+                "fullResponse": true,
+                "neverError": true,
+                "responseFormat": "text"
+              }
+            }
+          }
+        },
+        "id": "b7c1d2e3-0004-4000-8000-000000000004",
+        "name": "Send bytes",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          720,
+          -100
+        ],
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Turns the upload's HTTP response into {ok, status, body}. The item's headers (with the access key)\n// are not passed on, and this workflow keeps no execution data.\nconst r=$input.first().json||{};\n/* the request itself failed (timeout, connection reset, a header value refused): \"Send bytes\" continues with\n   an error item instead of stopping the run, so the caller still gets a reason. Keys are scrubbed from it. */\nif(r.error!==undefined&&r.statusCode===undefined){\n  const raw=typeof r.error==='string'?r.error:((r.error&&(r.error.message||r.error.description))||'unknown error');\n  const clean=String(raw).replace(/(OAuth|Bearer)\\s+\\S+/gi,'$1 …').replace(/EAA[A-Za-z0-9]{10,}/g,'…').replace(/eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]+/g,'…').slice(0,200);\n  return [{json:{ok:false,status:0,error:'The upload could not reach the server: '+clean}}];\n}\nconst st=Number(r.statusCode||0);\nlet body=(r.body!==undefined)?r.body:r.data; /* the HTTP Request node puts a text reply in 'data' */\nif(typeof body==='string'){ try{ body=JSON.parse(body); }catch(e){} }\nif(st>=200&&st<300) return [{json:{ok:true,status:st,body}}];\n/* Meta's upload host puts its reason in debug_info; the Graph API in error; Supabase in message */\nconst msg=(body&&body.error&&(body.error.error_user_msg||body.error.message))||(body&&body.debug_info&&body.debug_info.message)||(body&&body.message)||('HTTP '+st);\nreturn [{json:{ok:false,status:st,body,error:'The upload was refused: '+msg}}];\n"
+        },
+        "id": "b7c1d2e3-0005-4000-8000-000000000005",
+        "name": "Read the answer",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          -100
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "firstIncomingItem",
+          "options": {}
+        },
+        "id": "b7c1d2e3-0006-4000-8000-000000000006",
+        "name": "Reply",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1200,
+          -100
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "firstIncomingItem",
+          "options": {
+            "responseCode": 400
+          }
+        },
+        "id": "b7c1d2e3-0007-4000-8000-000000000007",
+        "name": "Reply: refused",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          720,
+          120
+        ]
+      }
+    ],
+    "connections": {
+      "Upload request (POST)": {
+        "main": [
+          [
+            {
+              "node": "Check request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check request": {
+        "main": [
+          [
+            {
+              "node": "Request OK?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Request OK?": {
+        "main": [
+          [
+            {
+              "node": "Send bytes",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Reply: refused",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send bytes": {
+        "main": [
+          [
+            {
+              "node": "Read the answer",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read the answer": {
+        "main": [
+          [
+            {
+              "node": "Reply",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "saveDataSuccessExecution": "none",
+      "saveDataErrorExecution": "none",
+      "saveManualExecutions": false,
+      "saveExecutionProgress": false
+    }
+  }
+]

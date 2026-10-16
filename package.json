@@ -1,0 +1,19 @@
+{
+  "name": "whatsapp-blaster",
+  "private": true,
+  "description": "WhatsApp Blaster: WhatsApp campaigns, one-to-one messages, shared team inbox, AI bot and bot knowledge. Deploys are switched off in this copy (tools/targets.json).",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "staging:build": "node tools/build-staging.mjs",
+    "staging:preview": "node tools/preview.mjs",
+    "staging:setup-server": "node tools/staging-server.mjs setup",
+    "staging:deploy": "node tools/staging-server.mjs deploy",
+    "prod:check": "node tools/prod.mjs check",
+    "prod:deploy": "node tools/prod.mjs deploy",
+    "prod:rollback": "node tools/prod.mjs rollback",
+    "prod:pull": "node tools/prod.mjs pull",
+    "staging:wa": "node tools/sim-wa.mjs"
+  }
+}

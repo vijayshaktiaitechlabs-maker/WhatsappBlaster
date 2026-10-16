@@ -1,0 +1,25 @@
+{
+  "accent": "#EC6B2D",
+  "labels": {},
+  "brand_2": "#1E3A6E",
+  "modules": [
+    "dash",
+    "inbox",
+    "members",
+    "payments",
+    "bookings",
+    "checkin",
+    "events",
+    "regs",
+    "broadcasts",
+    "reports",
+    "staff",
+    "settings",
+    "knowledge"
+  ],
+  "primary": "#16264B",
+  "tagline": "Where Athletes become Champions",
+  "logo_mark": "S",
+  "company_name": "Shakti Sports Club",
+  "business_type": "sports"
+}

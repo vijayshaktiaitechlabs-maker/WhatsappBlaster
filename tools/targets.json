@@ -1,0 +1,53 @@
+{
+  "_note": "WhatsApp Blaster product copy. Deploys are OFF (deployEnabled false) until the product has its own server, n8n and Supabase project. supabaseRef and liveTenantId are kept only as guards: the build refuses to touch the Shakti Sports Club live database.",
+  "deployEnabled": false,
+  "server": "",
+  "sshKey": "",
+  "publicBase": "https://n8n.example.com",
+  "supabaseRef": "ttpecupfolgbbdagkotc",
+  "liveTenantId": "935a6acc-d8dc-44d7-9c33-7f21e7e69010",
+  "liveWabaId": "",
+  "web": [
+    {
+      "name": "admin",
+      "source": "admin-panel/index.html",
+      "url": "/admin/",
+      "serverFile": "/docker/admin/index.html",
+      "live": false
+    }
+  ],
+  "workflows": [
+    {
+      "source": "broadcast_wf_vps.json",
+      "id": null
+    },
+    {
+      "source": "broadcast_scheduler_wf.json",
+      "id": null
+    },
+    {
+      "source": "wa_status_wf.json",
+      "id": null,
+      "activate": false
+    },
+    {
+      "source": "file_upload_relay_wf.json",
+      "id": null
+    },
+    {
+      "source": "wa_bot_wf.json",
+      "id": null,
+      "note": "The WhatsApp bot for every club (webhook /wa-bot). Already live: its id must never be null, or a deploy would create a second bot on the same path."
+    },
+    {
+      "source": "kb_files_wf.json",
+      "id": null
+    }
+  ],
+  "staging": {
+    "serverDir": "/docker/staging",
+    "urlPath": "/staging",
+    "container": "shakti-staging"
+  },
+  "backupDir": ""
+}
